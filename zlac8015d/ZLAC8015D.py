@@ -1,5 +1,5 @@
 
-from pymodbus.client.sync import ModbusSerialClient as ModbusClient
+from pymodbus.client import ModbusSerialClient as ModbusClient
 import numpy as np
 
 class Controller:
