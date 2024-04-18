@@ -4,15 +4,15 @@ import numpy as np
 
 class Controller:
 
-	def __init__(self, port="/dev/ttyUSB0"):
+	def __init__(self, port="/dev/ttyUSB0", baudrate=115200, timeout=1, slave_id=1):
 
 		self._port = port
 
-		self.client = ModbusClient(method='rtu', port=self._port, baudrate=115200, timeout=1)
+		self.client = ModbusClient(method='rtu', port=self._port, baudrate=baudrate, timeout=timeout)
 
 		self.client.connect()
 
-		self.ID = 1
+		self.ID = slave_id
 
 		######################
 		## Register Address ##
@@ -104,7 +104,7 @@ class Controller:
 		read_success = False
 		reg = [None]*WORD
 		while not read_success:
-			result = self.client.read_holding_registers(ADDR, WORD, unit=self.ID)
+			result = self.client.read_holding_registers(ADDR, WORD, slave=self.ID)
 			try:
 				for i in range(WORD):
 					reg[i] = result.registers[i]
@@ -136,12 +136,12 @@ class Controller:
 			print("set_mode ERROR: set only 1, 2, or 3")
 			return 0
 
-		result = self.client.write_register(self.OPR_MODE, MODE, unit=self.ID)
+		result = self.client.write_register(self.OPR_MODE, MODE, slave=self.ID)
 		return result
 
 	def get_mode(self):
 
-		# result = self.client.read_holding_registers(self.OPR_MODE, 1, unit=self.ID)
+		# result = self.client.read_holding_registers(self.OPR_MODE, 1, slave=self.ID)
 		registers = self.modbus_fail_read_handler(self.OPR_MODE, 1)
 
 		mode = registers[0]
@@ -149,14 +149,14 @@ class Controller:
 		return mode
 
 	def enable_motor(self):
-		result = self.client.write_register(self.CONTROL_REG, self.ENABLE, unit=self.ID)
+		result = self.client.write_register(self.CONTROL_REG, self.ENABLE, slave=self.ID)
 
 	def disable_motor(self):
-		result = self.client.write_register(self.CONTROL_REG, self.DOWN_TIME, unit=self.ID)
+		result = self.client.write_register(self.CONTROL_REG, self.DOWN_TIME, slave=self.ID)
 
 	def get_fault_code(self):
 
-		fault_codes = self.client.read_holding_registers(self.L_FAULT, 2, unit=self.ID)
+		fault_codes = self.client.read_holding_registers(self.L_FAULT, 2, slave=self.ID)
 
 		L_fault_code = fault_codes.registers[0]
 		R_fault_code = fault_codes.registers[1]
@@ -167,7 +167,7 @@ class Controller:
 		return (L_fault_flag, L_fault_code), (R_fault_flag, R_fault_code)
 
 	def clear_alarm(self):
-		result = self.client.write_register(self.CONTROL_REG, self.ALRM_CLR, unit=self.ID)
+		result = self.client.write_register(self.CONTROL_REG, self.ALRM_CLR, slave=self.ID)
 
 	def set_accel_time(self, L_ms, R_ms):
 
@@ -181,7 +181,7 @@ class Controller:
 		elif R_ms < 0:
 			R_ms = 0
 
-		result = self.client.write_registers(self.L_ACL_TIME, [int(L_ms),int(R_ms)], unit=self.ID)
+		result = self.client.write_registers(self.L_ACL_TIME, [int(L_ms),int(R_ms)], slave=self.ID)
 
 
 	def set_decel_time(self, L_ms, R_ms):
@@ -196,7 +196,7 @@ class Controller:
 		elif R_ms < 0:
 			R_ms = 0
 
-		result = self.client.write_registers(self.L_DCL_TIME, [int(L_ms), int(R_ms)], unit=self.ID)
+		result = self.client.write_registers(self.L_DCL_TIME, [int(L_ms), int(R_ms)], slave=self.ID)
 
 	def int16Dec_to_int16Hex(self,int16):
 
@@ -223,12 +223,12 @@ class Controller:
 		left_bytes = self.int16Dec_to_int16Hex(L_rpm)
 		right_bytes = self.int16Dec_to_int16Hex(R_rpm)
 
-		result = self.client.write_registers(self.L_CMD_RPM, [left_bytes, right_bytes], unit=self.ID)
+		result = self.client.write_registers(self.L_CMD_RPM, [left_bytes, right_bytes], slave=self.ID)
 
 	def get_rpm(self):
 
 
-		# rpms = self.client.read_holding_registers(self.L_FB_RPM, 2, unit=self.ID)
+		# rpms = self.client.read_holding_registers(self.L_FB_RPM, 2, slave=self.ID)
 		# fb_L_rpm = np.int16(rpms.registers[0])/10.0
 		# fb_R_rpm = np.int16(rpms.registers[1])/10.0
 
@@ -263,19 +263,19 @@ class Controller:
 		elif max_R_rpm < 1:
 			max_R_rpm = 1
 
-		result = self.client.write_registers(self.L_MAX_RPM_POS, [int(max_L_rpm), int(max_R_rpm)], unit=self.ID)
+		result = self.client.write_registers(self.L_MAX_RPM_POS, [int(max_L_rpm), int(max_R_rpm)], slave=self.ID)
 
 	def set_position_async_control(self):
 
-		result = self.client.write_register(self.POS_CONTROL_TYPE, self.ASYNC, unit=self.ID)
+		result = self.client.write_register(self.POS_CONTROL_TYPE, self.ASYNC, slave=self.ID)
 
 	def move_left_wheel(self):
 
-		result = self.client.write_register(self.CONTROL_REG, self.POS_L_START, unit=self.ID)
+		result = self.client.write_register(self.CONTROL_REG, self.POS_L_START, slave=self.ID)
 
 	def move_right_wheel(self):
 
-		result = self.client.write_register(self.CONTROL_REG, self.POS_R_START, unit=self.ID)
+		result = self.client.write_register(self.CONTROL_REG, self.POS_R_START, slave=self.ID)
 
 	def deg_to_32bitArray(self, deg):
 
@@ -291,14 +291,14 @@ class Controller:
 		R_array = self.deg_to_32bitArray(ang_R)
 		all_cmds_array = L_array + R_array
 
-		result = self.client.write_registers(self.L_CMD_REL_POS_HI, all_cmds_array, unit=self.ID)
+		result = self.client.write_registers(self.L_CMD_REL_POS_HI, all_cmds_array, slave=self.ID)
 
 	def get_wheels_travelled(self):
 
 		# read_success = False
 		# while not read_success:
 
-		# 	result = self.client.read_holding_registers(self.L_FB_POS_HI, 4, unit=self.ID)
+		# 	result = self.client.read_holding_registers(self.L_FB_POS_HI, 4, slave=self.ID)
 		# 	try:
 		# 		l_pul_hi = result.registers[0]
 		# 		l_pul_lo = result.registers[1]
