@@ -125,14 +125,11 @@ class Controller:
 
         return reg
 
-    def rpm_to_radPerSec(self, rpm):
-        return rpm * 2 * np.pi / 60.0
-
     def rpm_to_linear(self, rpm):
-        W_Wheel = self.rpm_to_radPerSec(rpm)
-        V = W_Wheel * self.R_Wheel
+        return rpm * 2 * np.pi / 60.0 * self.R_Wheel
 
-        return V
+    def linear_to_rpm(self, linear):
+        return linear / (2 * np.pi / 60.0 * self.R_Wheel)
 
     def set_mode(self, MODE):
         if MODE == 1:
@@ -218,6 +215,11 @@ class Controller:
         return self.client.write_registers(
             self.L_CMD_RPM, [left_bytes, right_bytes], slave=self.ID
         )
+
+    def set_speed(self, L_speed, R_speed):
+        left_rpm = self.linear_to_rpm(L_speed)
+        right_rpm = self.linear_to_rpm(R_speed)
+        return self.set_rpm(left_rpm, right_rpm)
 
     def get_rpm(self):
         registers = self.modbus_fail_read_handler(self.L_FB_RPM, 2)
