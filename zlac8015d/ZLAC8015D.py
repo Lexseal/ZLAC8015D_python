@@ -126,10 +126,10 @@ class Controller:
         return reg
 
     def rpm_to_linear(self, rpm):
-        return rpm * 2 * np.pi / 60.0 * self.R_Wheel
+        return rpm / 60.0 * self.travel_in_one_rev
 
     def linear_to_rpm(self, linear):
-        return linear / (2 * np.pi / 60.0 * self.R_Wheel)
+        return linear / self.travel_in_one_rev * 60.0
 
     def set_mode(self, MODE):
         if MODE == 1:
@@ -191,15 +191,8 @@ class Controller:
         )
 
     def set_decel_time(self, L_ms, R_ms):
-        if L_ms > 32767:
-            L_ms = 32767
-        elif L_ms < 0:
-            L_ms = 0
-
-        if R_ms > 32767:
-            R_ms = 32767
-        elif R_ms < 0:
-            R_ms = 0
+        L_ms = np.clip(L_ms, 0, 32767)
+        R_ms = np.clip(R_ms, 0, 32767)
 
         return self.client.write_registers(
             self.L_DCL_TIME, [int(L_ms), int(R_ms)], slave=self.ID
@@ -232,7 +225,7 @@ class Controller:
         rpmL, rpmR = self.get_rpm()
 
         VL = self.rpm_to_linear(rpmL)
-        VR = self.rpm_to_linear(-rpmR)
+        VR = self.rpm_to_linear(rpmR)
 
         return VL, VR
 
