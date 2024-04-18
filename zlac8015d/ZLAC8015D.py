@@ -205,8 +205,8 @@ class Controller:
             self.L_DCL_TIME, [int(L_ms), int(R_ms)], slave=self.ID
         )
 
-    def to_int16(val):
-        return 0xFFFF & val
+    def to_int16(self, val):
+        return 0xFFFF & int(val)
 
     def set_rpm(self, L_rpm, R_rpm):
         left_bytes = self.to_int16(np.clip(L_rpm, -3000, 3000))
