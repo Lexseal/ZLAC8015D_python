@@ -10,7 +10,7 @@ setup(
     packages=['zlac8015d',],
     install_requires = [
         'pymodbus',
-        'numpy'
+        'numpy',
         'pyserial'
     ]
 )
