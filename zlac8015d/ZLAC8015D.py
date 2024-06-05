@@ -105,7 +105,7 @@ class Controller:
         ##############
         ## Odometry ##
         ##############
-        self.R_Wheel = kwargs.get("wheel_radius", 0.0635)  # radius of wheel in meter
+        self.R_Wheel = kwargs.get("wheel_radius", 0.065)  # radius of wheel in meter
         self.travel_in_one_rev = 2 * np.pi * self.R_Wheel
         self.cpr = 16384  # counts per revolution
 
